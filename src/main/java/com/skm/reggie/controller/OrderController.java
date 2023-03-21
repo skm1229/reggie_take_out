@@ -138,18 +138,27 @@ public class OrderController {
      */
     @PutMapping
     public R<String> update(@RequestBody Orders orders) {
-        //获取当前订单状态
-        Integer status = orders.getStatus();
-        if (status == 4) {
-            throw new CustomException("订单已完成，无需修改");
-        }
         log.info("修改订单信息: {}", orders);
         LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
         //获取订单号
         Long ordersId = orders.getId();
         queryWrapper.eq(Orders::getId,ordersId);
-        queryWrapper.eq(Orders::getStatus,2);
+        //获取当前订单状态
+        Integer status = orders.getStatus();
+        if(status == 3) {
+            //订单待派送
+            queryWrapper.eq(Orders::getStatus,2);
+        }
+        if(status == 4) {
+            //订单已派送
+            queryWrapper.eq(Orders::getStatus,3);
+        }
+
+
         Orders ordersOne = orderService.getOne(queryWrapper);
+        if(ordersOne == null){
+            throw new CustomException("订单已完成，无需修改");
+        }
         ordersOne.setStatus(orders.getStatus());
         orderService.updateById(ordersOne);
         return R.success("修改订单状态成功~~");
