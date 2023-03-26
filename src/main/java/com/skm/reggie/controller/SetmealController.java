@@ -17,6 +17,8 @@ import com.skm.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Bean;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +48,7 @@ public class SetmealController {
      * @return
      */
     @PostMapping
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public R<String> save(@RequestBody SetmealDto setmealDto) {
         log.info("套餐信息为： {}",setmealDto);
         setmealService.saveWithDish(setmealDto);
@@ -111,15 +114,16 @@ public class SetmealController {
     }
 
     /**
-     * 更具id查询套餐信息
+     * 更据iid查询套餐信息
      * @param id
      * @return
      */
     @GetMapping("/{id}")
-    public R<Setmeal> get(@PathVariable("id") Long id) {
+    @Cacheable(value = "setmealCache",key = "#id")
+    public R<SetmealDto> get(@PathVariable("id") Long id) {
         log.info("id = {}",id);
-        Setmeal setmeal = setmealService.getById(id);
-        return R.success(setmeal);
+        SetmealDto setmealDto = setmealService.getByIdWithDish(id);
+        return R.success(setmealDto);
     }
 
     /**
@@ -129,6 +133,7 @@ public class SetmealController {
      * @return
      */
     @PostMapping("/status/{status}")
+    @CacheEvict(value = {"setmealCache","setmealDishCache"} , allEntries = true)
     public R<String> switchStatus(@PathVariable("status") int status,@RequestParam List<Long> ids) {
         //条件构造器
         LambdaUpdateWrapper<Setmeal> updateWrapper = new LambdaUpdateWrapper<>();
@@ -153,6 +158,7 @@ public class SetmealController {
      * @return
      */
    @GetMapping("/list")
+   @Cacheable(value = "setmealCache",key = "#setmeal.categoryId + '_' + #setmeal.status")
     public R<List<Setmeal>> list(Setmeal setmeal) {
         LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(setmeal.getCategoryId() != null,Setmeal::getCategoryId,setmeal.getCategoryId());
@@ -168,6 +174,7 @@ public class SetmealController {
      * @return
      */
     @GetMapping("/dish/{id}")
+    @Cacheable(value = "setmealDishCache",key = "#id")
     @Transactional
     public R<List<DishDto>> getDishBySetmeal(@PathVariable("id")Long id) {
         //条件构造器
@@ -207,6 +214,31 @@ public class SetmealController {
             return dishDto;
         }).collect(Collectors.toList());
         return R.success(dishDtoList);
+    }
+
+    /**
+     * 修改套餐
+     * @param setmealDto
+     * @return
+     */
+    @PutMapping
+    @CacheEvict(value = {"setmealCache","setmealDishCache"},allEntries = true)
+    public R<String> update(@RequestBody SetmealDto setmealDto) {
+        //先判断是否接收到数据
+        if(setmealDto==null) {
+            return  R.error("请求异常");
+        }
+        //判断套餐下面是否还有关联菜品
+        if(setmealDto.getSetmealDishes()==null)
+        {
+            return R.error("套餐没有菜品，请添加");
+        }
+        //更新相关信息
+        setmealService.updateWithDish(setmealDto);
+
+        return R.success("修改套餐信息成功~~");
+
+
     }
 
 }

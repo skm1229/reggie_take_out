@@ -16,6 +16,7 @@ import com.skm.reggie.service.SetmealDishService;
 import com.skm.reggie.service.SetmealService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
     @Autowired
     private SetmealService setmealService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品，同时保存口味数据
@@ -99,6 +103,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             item.setDishId(dishDto.getId());
             return item;
         }).collect(Collectors.toList());
+
         dishFlavorService.saveBatch(flavors);
     }
 

@@ -9,6 +9,8 @@ import com.skm.reggie.service.DishService;
 import com.skm.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +29,7 @@ public class CategoryController {
      * @return
      */
     @PostMapping
+    @CacheEvict(value = "categoryCache",allEntries = true)
     public R<String> save(@RequestBody Category category) {
         categoryService.save(category);
         return R.success("新增分类成功~~");
@@ -51,6 +54,7 @@ public class CategoryController {
      * @return
      */
     @DeleteMapping
+    @CacheEvict(value = "categoryCache",allEntries = true)
     public R<String> delete(Long ids) {
         categoryService.remove(ids);
         return R.success("删除成功~~");
@@ -62,6 +66,7 @@ public class CategoryController {
      * @return
      */
     @PutMapping
+    @CacheEvict(value = "categoryCache",allEntries = true)
     public R<String> update(@RequestBody Category category) {
         log.info("信息为{}",category);
         categoryService.updateById(category);
@@ -74,6 +79,7 @@ public class CategoryController {
      * @return
      */
     @GetMapping("/list")
+    @Cacheable(value = "categoryCache",key = " 'category类型_' + #category.type")
     public R<List<Category>> list(Category category) {
         //条件构造器
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
