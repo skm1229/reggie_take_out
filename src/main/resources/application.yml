@@ -1,6 +1,8 @@
 server:
   port: 8080
 spring:
+#  main:
+#    allow-bean-definition-overriding: true
   application:
     name: reggie_take_out
   datasource:
@@ -32,6 +34,7 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: ASSIGN_ID
+
 
 
 reggie:
