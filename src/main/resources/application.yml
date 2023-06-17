@@ -12,9 +12,9 @@ spring:
       username: root
       password: root
   redis:
-    host: localhost
+    host: 192.168.119.128
     port: 6379
-    #password: root
+    password: 123456
     database: 0 #操作0号数据库
     jedis:
       #Redis连接池配置
@@ -38,4 +38,4 @@ mybatis-plus:
 
 
 reggie:
-  path: D:\img\
+  path: D:\img\图片资源\
